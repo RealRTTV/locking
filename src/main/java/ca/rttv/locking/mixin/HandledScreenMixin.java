@@ -45,14 +45,17 @@ final class HandledScreenMixin extends Screen {
     private void drawSlot(MatrixStack matrices, int mouseX, int mouseY, float delta, CallbackInfo ci, int i, int j, MatrixStack matrixStack, int k, Slot slot) {
         if (slot != null && Locked.isLocked(slot)) {
             RenderSystem.setShaderTexture(0, SLOT_LOCK_TEXTURE);
-            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 0.0f);
-            DrawableHelper.drawTexture(matrices, slot.x, slot.y, 400, 0, 0, 16, 16, 16, 16);
+            DrawableHelper.drawTexture(matrices, slot.x, slot.y, 0, 0, 0, 16, 16, 16, 16);
         }
     }
 
     @Inject(method = "onMouseClick(Lnet/minecraft/screen/slot/Slot;IILnet/minecraft/screen/slot/SlotActionType;)V", at = @At("HEAD"), cancellable = true)
     private void onMouseClick(Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
-        if (slot != null && Locked.isLocked(slot)) {
+        if (slot != null
+         && Locked.isLocked(slot)
+         || actionType == SlotActionType.SWAP
+         && Locked.LOCKS.contains(button)
+        ) {
             ci.cancel();
         }
     }

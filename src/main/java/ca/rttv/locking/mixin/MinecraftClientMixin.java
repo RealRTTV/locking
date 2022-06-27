@@ -19,10 +19,16 @@ final class MinecraftClientMixin {
     @Nullable
     public ClientPlayerEntity player;
 
-    @ModifyExpressionValue(method = "handleInputEvents", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isSpectator()Z"), slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;getAdvancementHandler()Lnet/minecraft/client/network/ClientAdvancementManager;")))
-    private boolean isSpectator(boolean value) {
+    @ModifyExpressionValue(method = "handleInputEvents", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isSpectator()Z", ordinal = 1))
+    private boolean swapHands(boolean value) {
         //noinspection ConstantConditions
         return value || Locked.LOCKS.contains(player.getInventory().selectedSlot) || Locked.LOCKS.contains(40);
+    }
+
+    @ModifyExpressionValue(method = "handleInputEvents", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isSpectator()Z", ordinal = 2))
+    private boolean dropItem(boolean value) {
+        //noinspection ConstantConditions
+        return value || Locked.LOCKS.contains(player.getInventory().selectedSlot);
     }
 
     @Inject(method = "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V", at = @At("TAIL"))

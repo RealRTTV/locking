@@ -1,12 +1,10 @@
 package ca.rttv.locking;
 
-import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.screen.slot.Slot;
-import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +14,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Locked {
-    public static final Logger LOGGER = LogUtils.getLogger();
     public static final Thread nbtThread = new Thread(Locked::saveNbt, "(Locked) Lock NBT Writer");
     public static final File file = new File(MinecraftClient.getInstance().runDirectory, "locked_slots.nbt");
     public static final Set<Integer> LOCKS = new HashSet<>(40);
@@ -47,10 +44,11 @@ public class Locked {
     }
 
     private static String getWorldName() {
-        if (MinecraftClient.getInstance().getServer() != null) {
-            return MinecraftClient.getInstance().getServer().getSaveProperties().getLevelName();
-        } else if (MinecraftClient.getInstance().getNetworkHandler() != null) {
-            return MinecraftClient.getInstance().getNetworkHandler().getConnection().getAddress().toString();
+        final MinecraftClient client = MinecraftClient.getInstance();
+        if (client.getServer() != null) {
+            return client.getServer().getSaveProperties().getLevelName();
+        } else if (client.getNetworkHandler() != null) {
+            return client.getNetworkHandler().getConnection().getAddress().toString();
         } else {
             throw new NullPointerException("Tried to get world name in a situation where you are not on a server, nor on a single-player world, please note how the hell this happened");
         }
