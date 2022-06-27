@@ -5,6 +5,8 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,12 +31,21 @@ public class Locking {
     }
 
     public static void toggleLock(Slot slot) {
-        if (!(slot.inventory instanceof PlayerInventory)) {
+        final MinecraftClient client = MinecraftClient.getInstance();
+
+
+        if (!(slot.inventory instanceof PlayerInventory) || client.world == null || client.player == null) {
             return;
         }
 
-        if (!LOCKS.remove(slot.getIndex()) && slot.hasStack()) {
-            LOCKS.add(slot.getIndex());
+        if (!LOCKS.remove(slot.getIndex())) {
+            if (slot.hasStack()) {
+                LOCKS.add(slot.getIndex());
+                client.world.playSound(client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_HAT, SoundCategory.PLAYERS, 1.0f, 1.5f, false);
+            }
+        } else {
+            // disable
+            client.world.playSound(client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_BASEDRUM, SoundCategory.PLAYERS, 1.0f, 0.9f, false);
         }
 
         shouldSave.set(true);
