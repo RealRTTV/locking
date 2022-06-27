@@ -1,6 +1,6 @@
 package ca.rttv.locking.mixin;
 
-import ca.rttv.locking.Locked;
+import ca.rttv.locking.Locking;
 import ca.rttv.locking.duck.GameOptionsDuck;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawableHelper;
@@ -37,13 +37,13 @@ final class HandledScreenMixin extends Screen {
     private void keyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
         //noinspection ConstantConditions
         if (focusedSlot != null && GameOptionsDuck.getLockKey(client.options).matchesKey(keyCode, scanCode)) {
-            Locked.toggleLock(focusedSlot);
+            Locking.toggleLock(focusedSlot);
         }
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;drawSlot(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/screen/slot/Slot;)V", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
     private void drawSlot(MatrixStack matrices, int mouseX, int mouseY, float delta, CallbackInfo ci, int i, int j, MatrixStack matrixStack, int k, Slot slot) {
-        if (slot != null && Locked.isLocked(slot)) {
+        if (slot != null && Locking.isLocked(slot)) {
             RenderSystem.setShaderTexture(0, SLOT_LOCK_TEXTURE);
             DrawableHelper.drawTexture(matrices, slot.x, slot.y, 0, 0, 0, 16, 16, 16, 16);
         }
@@ -52,9 +52,9 @@ final class HandledScreenMixin extends Screen {
     @Inject(method = "onMouseClick(Lnet/minecraft/screen/slot/Slot;IILnet/minecraft/screen/slot/SlotActionType;)V", at = @At("HEAD"), cancellable = true)
     private void onMouseClick(Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
         if (slot != null
-         && Locked.isLocked(slot)
+         && Locking.isLocked(slot)
          || actionType == SlotActionType.SWAP
-         && Locked.LOCKS.contains(button)
+         && Locking.LOCKS.contains(button)
         ) {
             ci.cancel();
         }

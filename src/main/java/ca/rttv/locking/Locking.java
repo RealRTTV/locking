@@ -13,8 +13,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Locked {
-    public static final Thread nbtThread = new Thread(Locked::saveNbt, "(Locked) Lock NBT Writer");
+public class Locking {
+    public static final Thread nbtThread = new Thread(Locking::saveNbt, "(Locking) Lock NBT Writer");
     public static final File file = new File(MinecraftClient.getInstance().runDirectory, "locked_slots.nbt");
     public static final Set<Integer> LOCKS = new HashSet<>(40);
     public static final AtomicBoolean shouldSave = new AtomicBoolean(false);
