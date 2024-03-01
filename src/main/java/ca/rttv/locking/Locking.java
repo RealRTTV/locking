@@ -16,10 +16,18 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Locking {
-    public static final Thread nbtThread = new Thread(Locking::saveNbt, "(Locking) Lock NBT Writer");
     public static final File file = new File(MinecraftClient.getInstance().runDirectory, "locked_slots.nbt");
     public static final Set<Integer> LOCKS = new HashSet<>(40);
     public static final AtomicBoolean shouldSave = new AtomicBoolean(false);
+    public static final Thread nbtThread = new Thread(() -> {
+        while (true) {
+            if (shouldSave.getAndSet(false)) {
+                NbtCompound nbt = readFromFile();
+                nbt.putIntArray(getWorldName(), LOCKS.stream().mapToInt(i -> i).toArray());
+                writeToFile(nbt);
+            }
+        }
+    }, "(Locking) Lock NBT Writer");
     public static boolean loaded = false;
 
     public static boolean isLocked(Slot slot) {
@@ -33,7 +41,6 @@ public class Locking {
     public static void toggleLock(Slot slot) {
         final MinecraftClient client = MinecraftClient.getInstance();
 
-
         if (!(slot.inventory instanceof PlayerInventory) || client.world == null || client.player == null) {
             return;
         }
@@ -41,11 +48,10 @@ public class Locking {
         if (!LOCKS.remove(slot.getIndex())) {
             if (slot.hasStack()) {
                 LOCKS.add(slot.getIndex());
-                client.world.playSound(client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_HAT, SoundCategory.PLAYERS, 1.0f, 1.5f, false);
+                client.world.playSound(null, client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_HAT, SoundCategory.PLAYERS, 1.0f, 1.5f, client.world.getRandom().nextLong());
             }
         } else {
-            // disable
-            client.world.playSound(client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_BASEDRUM, SoundCategory.PLAYERS, 1.0f, 0.9f, false);
+            client.world.playSound(null, client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_BASEDRUM, SoundCategory.PLAYERS, 1.0f, 0.9f, client.world.getRandom().nextLong());
         }
 
         shouldSave.set(true);
@@ -74,16 +80,6 @@ public class Locking {
             nbt = readFromFile();
         }
         Arrays.stream(nbt.getIntArray(getWorldName())).forEach(LOCKS::add);
-    }
-
-    private static void saveNbt() {
-        while (true) {
-            if (shouldSave.getAndSet(false)) {
-                NbtCompound nbt = readFromFile();
-                nbt.putIntArray(getWorldName(), LOCKS.stream().mapToInt(i -> i).toArray());
-                writeToFile(nbt);
-            }
-        }
     }
 
     private static NbtCompound readFromFile() {

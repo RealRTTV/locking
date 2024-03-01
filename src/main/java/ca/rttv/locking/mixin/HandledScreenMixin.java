@@ -2,11 +2,9 @@ package ca.rttv.locking.mixin;
 
 import ca.rttv.locking.Locking;
 import ca.rttv.locking.duck.GameOptionsDuck;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
@@ -14,6 +12,7 @@ import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(HandledScreen.class)
 final class HandledScreenMixin extends Screen {
+    @Unique
     private static final Identifier SLOT_LOCK_TEXTURE = new Identifier("locking", "textures/gui/lock.png");
 
     private HandledScreenMixin(Text text) {
@@ -41,11 +41,10 @@ final class HandledScreenMixin extends Screen {
         }
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;drawSlot(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/screen/slot/Slot;)V", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void drawSlot(MatrixStack matrices, int mouseX, int mouseY, float delta, CallbackInfo ci, int i, int j, MatrixStack matrixStack, int k, Slot slot) {
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;drawSlot(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/screen/slot/Slot;)V", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
+    private void drawSlot(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci, int i, int j, int k, Slot slot) {
         if (slot != null && Locking.isLocked(slot)) {
-            RenderSystem.setShaderTexture(0, SLOT_LOCK_TEXTURE);
-            DrawableHelper.drawTexture(matrices, slot.x, slot.y, 0, 0, 0, 16, 16, 16, 16);
+            context.drawTexture(SLOT_LOCK_TEXTURE, slot.x, slot.y, 0, 0, 0, 16, 16, 16, 16);
         }
     }
 

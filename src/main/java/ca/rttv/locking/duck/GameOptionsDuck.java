@@ -1,13 +1,13 @@
 package ca.rttv.locking.duck;
 
 import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.option.KeyBind;
+import net.minecraft.client.option.KeyBinding;
 
 public interface GameOptionsDuck {
 
-    KeyBind locking$getLockKey();
+    KeyBinding locking$getLockKey();
 
-    static KeyBind getLockKey(GameOptions options) {
+    static KeyBinding getLockKey(GameOptions options) {
         return ((GameOptionsDuck) options).locking$getLockKey();
     }
 }

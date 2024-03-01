@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "locking",
+  "version": "${version}",
+  "name": "Locking",
+  "description": "Pressing a keybind will lock certain slots from being able to be dropped or moved",
+  "authors": [
+    "rsv"
+  ],
+  "contact": {
+    "sources": "https://github.com/RealRTTV/locking"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/locking/icon.png",
+  "environment": "client",
+  "entrypoints": {},
+  "mixins": [
+    "locking.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}
