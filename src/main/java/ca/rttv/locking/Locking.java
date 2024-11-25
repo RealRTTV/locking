@@ -14,12 +14,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public class Locking {
     public static final File file = new File(MinecraftClient.getInstance().runDirectory, "locked_slots.nbt");
     public static final Set<Integer> LOCKS = new HashSet<>(40);
     public static final AtomicBoolean shouldSave = new AtomicBoolean(false);
-    public static final Thread nbtThread = new Thread(() -> {
+    public static final Thread NBT_THREAD = new Thread(() -> {
         while (true) {
             if (shouldSave.getAndSet(false)) {
                 NbtCompound nbt = readFromFile();
@@ -31,32 +32,29 @@ public class Locking {
     public static boolean loaded = false;
 
     public static boolean isLocked(Slot slot) {
-        if (!loaded) {
-            loadNbt();
-            loaded = true;
-        }
-        return slot.inventory instanceof PlayerInventory && LOCKS.contains(slot.getIndex());
+        loadNbt();
+        return slot.inventory instanceof PlayerInventory && !slot.getStack().isEmpty() && LOCKS.contains(slot.getIndex());
     }
 
     public static void toggleLock(Slot slot) {
         final MinecraftClient client = MinecraftClient.getInstance();
+
+        loadNbt();
 
         if (!(slot.inventory instanceof PlayerInventory) || client.world == null || client.player == null) {
             return;
         }
 
         if (!LOCKS.remove(slot.getIndex())) {
-            if (slot.hasStack()) {
-                LOCKS.add(slot.getIndex());
-                client.world.playSound(null, client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_HAT, SoundCategory.PLAYERS, 1.0f, 1.5f, client.world.getRandom().nextLong());
-            }
+            LOCKS.add(slot.getIndex());
+            client.world.playSound(null, client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_HAT, SoundCategory.PLAYERS, 1.0f, 1.5f, client.world.getRandom().nextLong());
         } else {
             client.world.playSound(null, client.player.getX(), client.player.getY(), client.player.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_BASEDRUM, SoundCategory.PLAYERS, 1.0f, 0.9f, client.world.getRandom().nextLong());
         }
 
         shouldSave.set(true);
-        if (!nbtThread.isAlive()) {
-            nbtThread.start();
+        if (!NBT_THREAD.isAlive()) {
+            NBT_THREAD.start();
         }
     }
 
@@ -67,11 +65,16 @@ public class Locking {
         } else if (client.getNetworkHandler() != null) {
             return client.getNetworkHandler().getConnection().getAddress().toString();
         } else {
-            throw new NullPointerException("Tried to get world name in a situation where you are not on a server, nor on a single-player world, please note how the hell this happened");
+            throw new IllegalStateException("Tried to get world name in a situation where you are not on a server, nor on a single-player world, please note how the hell this happened");
         }
     }
 
-    private static void loadNbt() {
+    public static void loadNbt() {
+        if (loaded) { return; }
+        loaded = true;
+
+        LOCKS.clear();
+
         NbtCompound nbt;
         if (!file.exists()) {
             nbt = new NbtCompound();
@@ -88,7 +91,7 @@ public class Locking {
         }
 
         try {
-            return NbtIo.read(file);
+            return NbtIo.read(file.toPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -96,7 +99,7 @@ public class Locking {
 
     private static void writeToFile(NbtCompound nbt) {
         try {
-            NbtIo.write(nbt, file);
+            NbtIo.write(nbt, file.toPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
